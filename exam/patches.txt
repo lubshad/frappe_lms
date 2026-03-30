@@ -1,6 +1,18 @@
 [pre_model_sync]
 # Patches added in this section will be executed before doctypes are migrated
 # Read docs to understand patches: https://docs.frappe.io/framework/user/en/database-migrations
+exam.patches.change_lms_question_field_types
+exam.patches.change_lms_quiz_result_field_types
 
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated
+exam.patches.add_user_selected_program
+exam.patches.unhide_lesson_youtube_field
+exam.patches.add_reference_course_lesson_to_lms_question
+exam.patches.migrate_mcal_lms_data
+exam.patches.migrate_mcal_quiz_data
+exam.patches.make_lesson_chapter_optional
+exam.patches.make_instructor_optional_in_batch
+exam.patches.add_program_to_lms_batch
+exam.patches.add_member_type_to_lms_batch_enrollment
+exam.patches.add_course_to_lms_batch_enrollment

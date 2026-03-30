@@ -8,7 +8,7 @@ app_license = "mit"
 # Apps
 # ------------------
 
-# required_apps = []
+required_apps = ["lms"]
 
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
@@ -21,12 +21,18 @@ app_license = "mit"
 # 	}
 # ]
 
+# fixtures = [
+# 	{
+# 		"dt": "Exam Group",
+# 	}
+# ]
+
 # Includes in <head>
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/exam/css/exam.css"
-# app_include_js = "/assets/exam/js/exam.js"
+app_include_css = "/assets/exam/css/exam.css"
+app_include_js = "/assets/exam/js/exam.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/exam/css/exam.css"
@@ -86,7 +92,8 @@ app_license = "mit"
 # ------------
 
 # before_install = "exam.install.before_install"
-# after_install = "exam.install.after_install"
+after_install = "exam.install.after_install"
+# after_migrate = "exam.install._hide_other_workspaces"
 
 # Uninstallation
 # ------------
@@ -132,13 +139,13 @@ app_license = "mit"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+	"LMS Program": {
+		"on_trash": "exam.api.clear_user_selected_program"
+	}
+
+
+}
 
 # Scheduled Tasks
 # ---------------
@@ -170,15 +177,13 @@ app_license = "mit"
 # ------------------------------
 #
 # Specify custom mixins to extend the standard doctype controller.
-# extend_doctype_class = {
-# 	"Task": "exam.custom.task.CustomTaskMixin"
-# }
+override_doctype_class = {
+	"Course Lesson": "exam.custom.course_lesson.CustomCourseLesson",
+	"LMS Batch Enrollment": "exam.custom.batch_enrollment.CustomLMSBatchEnrollment"
+}
 
-# Overriding Methods
-# ------------------------------
-#
 # override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "exam.event.get_events"
+	# "login": "exam.exam.api.login"
 # }
 #
 # each overriding function accepts a `data` argument;
@@ -195,12 +200,12 @@ app_license = "mit"
 # Ignore links to specified DocTypes when deleting documents
 # -----------------------------------------------------------
 
-# ignore_links_on_delete = ["Communication", "ToDo"]
+ignore_links_on_delete = ["Communication", "ToDo", "User"]
 
 # Request Events
 # ----------------
 # before_request = ["exam.utils.before_request"]
-# after_request = ["exam.utils.after_request"]
+# after_request = ["exam.exam.api.after_request"]
 
 # Job Events
 # ----------
@@ -250,6 +255,5 @@ require_type_annotated_api_methods = True
 
 # Translation
 # ------------
-# List of apps whose translatable strings should be excluded from this app's translations.
-# ignore_translatable_strings_from = []
-
+# List of apps whose translatable strings should be excluded from this app's
+ignore_translatable_strings_from = []

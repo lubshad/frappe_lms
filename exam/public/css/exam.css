@@ -1,0 +1,13 @@
+body.exam-full-width {
+	--page-max-width: none;
+}
+
+body.exam-full-width .layout-main-section-wrapper,
+body.exam-full-width .layout-main-section,
+body.exam-full-width .page-body,
+body.exam-full-width .desk-page,
+body.exam-full-width .editor-js-container,
+body.exam-full-width .form-dashboard-section {
+	max-width: none;
+	width: 100%;
+}

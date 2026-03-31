@@ -205,6 +205,69 @@ def get_student_courses() -> list[dict]:
     return courses
 
 @frappe.whitelist()
+def get_assigned_quizzes(search: str = "", limit: int | str = 50, offset: int | str = 0) -> list[dict]:
+    """
+    Returns a list of quizzes associated with the student's enrolled programs.
+    Used by the Flutter app to show quizzes assigned to the student.
+    """
+    user = frappe.session.user
+    
+    # 1. Get programs the user is enrolled in
+    enrolled_batches = frappe.get_all(
+        "LMS Batch Enrollment",
+        filters={"member": user},
+        pluck="batch"
+    )
+    
+    programs = []
+    if enrolled_batches:
+        batch_programs = frappe.get_all(
+            "LMS Batch",
+            filters={"name": ["in", enrolled_batches]},
+            pluck="program"
+        )
+        for p in batch_programs:
+            if p and p not in programs:
+                programs.append(p)
+
+    # 2. Also check if the user has a selected program
+    user_doc = frappe.get_doc("User", user)
+    selected_program = user_doc.get("selected_program")
+    if selected_program and selected_program not in programs:
+        programs.append(selected_program)
+
+    if not programs:
+        return []
+
+    # 3. Get quizzes from these programs' program_quizzes child table
+    quiz_names = frappe.get_all(
+        "LMS Program Quiz",
+        filters={"parent": ["in", programs]},
+        pluck="quiz"
+    )
+    
+    if not quiz_names:
+        return []
+
+    # 4. Get full quiz details matching the Flutter model expectation
+    filters = {
+        "name": ["in", list(set(quiz_names))]
+    }
+    if search:
+        filters["title"] = ["like", f"%{search}%"]
+
+    quizzes = frappe.get_all(
+        "LMS Quiz",
+        filters=filters,
+        fields=["name", "title", "passing_percentage as passing_score", "max_attempts", "duration", "show_answers"],
+        limit_page_length=cint(limit),
+        limit_start=cint(offset),
+        order_by="modified desc"
+    )
+    
+    return quizzes
+
+@frappe.whitelist()
 def get_course_details(course_name: str) -> dict:
     """
     Returns the full structure of an LMS Course including chapters and lessons.
@@ -275,6 +338,24 @@ def update_program_course_order(program_name: str, course_names: list | str) -> 
 
     new_courses = [{"course": course_name} for course_name in course_names]
     program.set("program_courses", new_courses)
+    program.save(ignore_permissions=True)
+    return "Success"
+
+
+@frappe.whitelist()
+def update_program_quiz_order(program_name: str, quiz_names: list | str) -> str:
+    """
+    Updates the order of quizzes in an LMS Program based on the list of quiz names provided.
+    """
+    if isinstance(quiz_names, str):
+        quiz_names = json.loads(quiz_names)
+
+    try:
+        program = frappe.get_doc("LMS Program", program_name)
+    except frappe.DoesNotExistError:
+        frappe.throw(f"Program {program_name} not found", frappe.DoesNotExistError)
+
+    program.set("program_quizzes", [{"quiz": quiz_name} for quiz_name in quiz_names])
     program.save(ignore_permissions=True)
     return "Success"
 

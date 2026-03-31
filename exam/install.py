@@ -17,6 +17,9 @@ def after_install() -> None:
 	_make_lesson_chapter_optional()
 	_add_member_type_to_lms_batch_enrollment()
 	_add_course_to_lms_batch_enrollment()
+	_add_program_quizzes_to_lms_program()
+	_add_course_group_to_lms_course()
+	_add_course_group_to_lms_question()
 	frappe.db.commit()
 
 
@@ -222,6 +225,60 @@ def _add_member_type_to_lms_batch_enrollment() -> None:
 				"insert_after": "member",
 				"in_list_view": 1,
 				"in_standard_filter": 1,
+			}
+		]
+	}
+	create_custom_fields(custom_fields, ignore_validate=True)
+
+
+def _add_course_group_to_lms_question() -> None:
+	"""Add mandatory course_group field to LMS Question."""
+	custom_fields = {
+		"LMS Question": [
+			{
+				"fieldname": "course_group",
+				"fieldtype": "Link",
+				"label": "Course Group",
+				"options": "Course Group",
+				"reqd": 1,
+				"insert_after": "reference_lesson",
+				"in_list_view": 1,
+				"in_standard_filter": 1,
+			}
+		]
+	}
+	create_custom_fields(custom_fields, ignore_validate=True)
+
+
+def _add_course_group_to_lms_course() -> None:
+	"""Add mandatory course_group field to LMS Course."""
+	custom_fields = {
+		"LMS Course": [
+			{
+				"fieldname": "course_group",
+				"fieldtype": "Link",
+				"label": "Course Group",
+				"options": "Course Group",
+				"reqd": 1,
+				"insert_after": "title",
+				"in_list_view": 1,
+				"in_standard_filter": 1,
+			}
+		]
+	}
+	create_custom_fields(custom_fields, ignore_validate=True)
+
+
+def _add_program_quizzes_to_lms_program() -> None:
+	"""Add program_quizzes child table field to LMS Program."""
+	custom_fields = {
+		"LMS Program": [
+			{
+				"fieldname": "program_quizzes",
+				"fieldtype": "Table",
+				"label": "Program Quizzes",
+				"options": "LMS Program Quiz",
+				"insert_after": "program_courses",
 			}
 		]
 	}

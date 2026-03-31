@@ -16,3 +16,5 @@ exam.patches.make_instructor_optional_in_batch
 exam.patches.add_program_to_lms_batch
 exam.patches.add_member_type_to_lms_batch_enrollment
 exam.patches.add_course_to_lms_batch_enrollment
+exam.patches.create_higher_secondary_course_groups
+exam.patches.add_course_group_to_lms_question

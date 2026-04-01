@@ -23,8 +23,6 @@ def after_install() -> None:
 	frappe.db.commit()
 
 
-
-
 def _add_reference_lesson_to_lms_question() -> None:
 	"""Add reference_lesson custom field to LMS Question."""
 	custom_fields = {

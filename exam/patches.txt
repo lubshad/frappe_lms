@@ -18,3 +18,4 @@ exam.patches.add_member_type_to_lms_batch_enrollment
 exam.patches.add_course_to_lms_batch_enrollment
 exam.patches.create_higher_secondary_course_groups
 exam.patches.add_course_group_to_lms_question
+exam.patches.give_moderator_permissions_to_exam_doctypes

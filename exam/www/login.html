@@ -42,14 +42,15 @@
 
   .mcal-login-wrapper {
     display: grid;
-    grid-template-columns: minmax(0, 1.05fr) minmax(400px, 500px);
-    height: 100vh;
+    grid-template-columns: 1fr 1fr;
+    min-height: 100vh;
     width: 100vw;
     position: relative;
     left: 50%;
     right: 50%;
     margin-left: -50vw;
     margin-right: -50vw;
+    background: #f8fafc;
   }
 
   .mcal-left {
@@ -58,50 +59,51 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 24px 28px;
-  }
-
-  .mcal-left::before,
-  .mcal-left::after {
-    content: '';
-    position: absolute;
-    border-radius: 999px;
-    filter: blur(4px);
+    padding: 60px;
+    background-color: #fff;
   }
 
   .mcal-left::before {
-    width: 420px;
-    height: 420px;
-    right: -140px;
-    top: -120px;
-    background: rgba(13, 148, 136, 0.12);
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: radial-gradient(var(--mcal-border) 1px, transparent 1px);
+    background-size: 32px 32px;
+    opacity: 0.4;
+    pointer-events: none;
   }
 
   .mcal-left::after {
-    width: 320px;
-    height: 320px;
-    left: -120px;
-    bottom: -120px;
-    background: rgba(245, 158, 11, 0.14);
+    content: '';
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(13, 148, 136, 0.05) 0%, transparent 70%);
+    top: -200px;
+    left: -200px;
+    border-radius: 50%;
+    filter: blur(60px);
+  }
+
+  .mcal-right {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    align-self: center;
+    height: auto;
   }
 
   .mcal-hero-shell {
-    width: min(100%, 700px);
-    min-height: calc(100vh - 48px);
-    max-height: calc(100vh - 48px);
-    border-radius: 30px;
-    padding: 24px 26px;
-    position: relative;
-    overflow: hidden;
-    background:
-      linear-gradient(180deg, rgba(9, 49, 73, 0.18), rgba(9, 49, 73, 0.58)),
-      linear-gradient(135deg, rgba(13, 148, 136, 0.94), rgba(26, 77, 110, 0.95));
-    box-shadow: var(--mcal-shadow);
+    width: 100%;
+    max-width: 520px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    color: #fff;
-    isolation: isolate;
+    gap: 32px;
+    color: var(--mcal-text);
   }
 
   .mcal-hero-shell::before {
@@ -156,15 +158,16 @@
 
   .mcal-logo-text strong {
     display: block;
-    font-size: 1rem;
+    font-size: 1.4rem;
     font-weight: 700;
+    color: var(--mcal-secondary);
   }
 
   .mcal-logo-text span {
     display: block;
-    font-size: 0.78rem;
+    font-size: 0.88rem;
     font-weight: 400;
-    color: rgba(255,255,255,0.78);
+    color: var(--mcal-muted);
   }
 
   .mcal-toplink {
@@ -205,24 +208,24 @@
   }
 
   .mcal-hero-title {
-    margin-top: 16px;
-    font-size: clamp(2.2rem, 3.8vw, 3.3rem);
-    line-height: 1.06;
+    font-size: clamp(2.5rem, 4vw, 3.8rem);
+    line-height: 1.1;
     font-weight: 800;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.04em;
+    color: var(--mcal-text);
   }
 
   .mcal-hero-title .highlight {
-    display: inline-block;
-    color: #ffd071;
+    display: block;
+    color: var(--mcal-primary);
   }
 
   .mcal-hero-subtitle {
-    margin-top: 12px;
-    max-width: 380px;
-    font-size: 0.92rem;
-    line-height: 1.55;
-    color: rgba(255,255,255,0.86);
+    margin-top: 16px;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: var(--mcal-muted);
+    max-width: 480px;
   }
 
   .mcal-admin-points {
@@ -262,29 +265,21 @@
     padding-top: 8px;
   }
 
-  .mcal-right {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px 24px;
-  }
-
   .mcal-panel {
-    width: min(100%, 440px);
-    background: var(--mcal-surface);
+    width: min(100%, 420px);
+    background: #fff;
     border: 1px solid var(--mcal-border);
-    border-radius: 28px;
-    padding: 28px 26px;
-    backdrop-filter: blur(18px);
-    box-shadow: 0 24px 50px rgba(21, 54, 77, 0.1);
+    border-radius: 24px;
+    padding: 32px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.05);
   }
 
   .mcal-form-chip {
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 14px;
-    padding: 7px 12px;
+    margin-bottom: 8px;
+    padding: 5px 10px;
     border-radius: 999px;
     font-size: 0.82rem;
     font-weight: 500;
@@ -300,20 +295,26 @@
     background: var(--mcal-primary);
   }
 
-  .mcal-form-header { margin-bottom: 22px; }
+  .mcal-form-header { 
+    margin-bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
 
   .mcal-form-header h2 {
     font-size: 1.85rem;
-    line-height: 1.05;
+    line-height: 1.1;
     font-weight: 700;
     color: var(--mcal-text);
-    margin-bottom: 8px;
+    margin: 0;
   }
 
   .mcal-form-header p {
     font-size: 0.92rem;
     line-height: 1.5;
     color: var(--mcal-muted);
+    margin-top: 2px;
   }
 
   .page-card-body,
@@ -495,23 +496,72 @@
   }
 
   .mcal-alert {
-    padding: 10px 12px;
-    border-radius: 16px;
-    font-size: 0.86rem;
-    margin-bottom: 14px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    margin-bottom: 20px;
     display: none;
+    align-items: center;
+    gap: 10px;
+    animation: slideDown 0.3s ease;
+  }
+
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .mcal-alert.show {
+    display: flex;
   }
 
   .mcal-alert.error {
-    background: #fff1f2;
-    color: #be123c;
-    border: 1px solid #fecdd3;
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fee2e2;
   }
 
   .mcal-alert.success {
-    background: #ecfdf5;
-    color: #047857;
-    border: 1px solid #a7f3d0;
+    background: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #dcfce7;
+  }
+
+  /* Loading State */
+  .mcal-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .mcal-btn.loading {
+    pointer-events: none;
+    opacity: 0.8;
+  }
+
+  .mcal-btn.loading span {
+    visibility: hidden;
+  }
+
+  .mcal-btn .spinner {
+    display: none;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 0.8s linear infinite;
+    position: absolute;
+  }
+
+  .mcal-btn.loading .spinner {
+    display: block;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 
   .mcal-section { display: none; }
@@ -558,24 +608,14 @@
 <!-- {{ for_test }} -->
 <div class="mcal-login-wrapper">
 
-  <!-- LEFT PANEL -->
+  <!-- LEFT PANEL (HERO) -->
   <div class="mcal-left">
-    <div class="mcal-hero-shell">
-      <div class="mcal-topbar">
-        <div class="mcal-logo">
-          <div class="mcal-logo-mark">
-            <img src="/assets/exam/images/logo.png" alt="MCAL Logo">
-          </div>
-          <div class="mcal-logo-text">
-            <strong>MCAL India</strong>
-            <span>Learning Experience Platform</span>
-          </div>
-        </div>
-        <a class="mcal-toplink" href="/">Back to Website</a>
+    <div class="mcal-hero-shell" style="align-items: center; text-align: center;">
+      <div style="margin-bottom: 20px;">
+        <img src="/assets/exam/images/logo.png" alt="MCAL" style="height: 140px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.08));">
       </div>
 
       <div class="mcal-hero-copy">
-        <span class="mcal-eyebrow">MCAL India Admin Portal</span>
         <h1 class="mcal-hero-title">
           Manage your
           <span class="highlight">learning operations</span>
@@ -584,36 +624,34 @@
         <p class="mcal-hero-subtitle">
           Secure access for administrators managing programs, course content, questions, exams, and submissions.
         </p>
-        <div class="mcal-admin-points">
-          <div class="mcal-admin-point">
-            <span class="mcal-admin-point-dot"></span>
-            <span>Programs, content, questions, exams, and submissions in one admin workspace</span>
-          </div>
-        </div>
       </div>
 
-      <div class="mcal-hero-footer">
-        <div class="mcal-admin-point">
-          <span class="mcal-admin-point-dot"></span>
-          <span>Use your MCAL administrator credentials to continue.</span>
-        </div>
+      <div style="margin-top: auto;">
+        <a class="mcal-toplink" href="/" style="color: var(--mcal-primary); border-color: var(--mcal-primary);">← Back to Website</a>
       </div>
     </div>
   </div>
 
-  <!-- RIGHT PANEL -->
+  <!-- RIGHT PANEL (LOGIN) -->
   <div class="mcal-right">
     <div class="mcal-panel">
 
     <!-- LOGIN SECTION -->
     <div id="section-login" class="mcal-section active">
-      <div style="text-align: center; margin-bottom: 28px;">
-        <img src="/assets/exam/images/logo.png" alt="MCAL" style="height: 92px;">
+      <div class="mcal-logo" style="margin-bottom: 16px;">
+        <div class="mcal-logo-mark">
+          <img src="/assets/exam/images/logo.png" alt="MCAL Logo">
+        </div>
+        <div class="mcal-logo-text">
+          <strong>MCAL India</strong>
+          <span>Learning Experience Platform</span>
+        </div>
       </div>
+      
       <div class="mcal-form-header">
         <div class="mcal-form-chip">Admin Portal Login</div>
         <h2>Welcome back</h2>
-        <p>Sign in to continue managing MCAL India content and exam operations.</p>
+        <p style="font-size: 0.88rem;">Sign in to continue managing MCAL India admin operations.</p>
       </div>
 
       <div id="login-alert" class="mcal-alert error"></div>
@@ -647,7 +685,10 @@
           <a href="#forgot" onclick="showSection('forgot')">{{ _("Forgot Password?") }}</a>
         </div>
 
-        <button type="submit" class="mcal-btn btn-primary btn-login">{{ _("Sign In") }}</button>
+        <button type="submit" class="mcal-btn btn-primary btn-login">
+          <span>{{ _("Sign In") }}</span>
+          <div class="spinner"></div>
+        </button>
       </form>
 
       {%- if not disable_signup and not disable_user_pass_login -%}
@@ -663,7 +704,7 @@
       <div class="mcal-form-header">
         <div class="mcal-form-chip">Account Recovery</div>
         <h2>Reset your password</h2>
-        <p>Enter your email address and we will send you a secure reset link.</p>
+        <p style="font-size: 0.88rem;">Enter your email address to receive a reset link.</p>
       </div>
 
       <div id="forgot-alert" class="mcal-alert"></div>
@@ -678,7 +719,10 @@
             <input type="email" id="forgot_email" placeholder="{{ _('you@example.com') }}" required autocomplete="username">
           </div>
         </div>
-        <button type="submit" class="mcal-btn btn-primary btn-forgot">{{ _("Send Reset Link") }}</button>
+        <button type="submit" class="mcal-btn btn-primary btn-forgot">
+          <span>{{ _("Send Reset Link") }}</span>
+          <div class="spinner"></div>
+        </button>
       </form>
 
       <div class="mcal-signup-link" style="margin-top:20px">
@@ -692,7 +736,7 @@
       <div class="mcal-form-header">
         <div class="mcal-form-chip">New Admin Access</div>
         <h2>Create your account</h2>
-        <p>Create an account for secure access to the MCAL India admin workspace.</p>
+        <p style="font-size: 0.88rem;">Create an account for secure admin access.</p>
       </div>
 
       <div id="signup-alert" class="mcal-alert"></div>
@@ -707,7 +751,7 @@
     {%- endif -%}
 
     </div>
-  </div><!-- /mcal-right -->
+  </div>
 </div><!-- /mcal-login-wrapper -->
 {% endblock %}
 
@@ -745,5 +789,54 @@
       el.textContent = '{{ _("Show") }}';
     }
   }
+
+  // ── Error handling and loading ─────────────────────────────
+  function showAlert(section, message, type = 'error') {
+    const alertEl = document.getElementById(section + '-alert');
+    if (alertEl) {
+      alertEl.textContent = message;
+      alertEl.className = 'mcal-alert ' + type + ' show';
+      setTimeout(() => alertEl.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+    }
+  }
+
+  function hideAlerts() {
+    document.querySelectorAll('.mcal-alert').forEach(el => el.classList.remove('show'));
+  }
+
+  // Intercept form submissions to show loading
+  document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', function() {
+      const btn = this.querySelector('.mcal-btn');
+      if (btn) btn.classList.add('loading');
+      hideAlerts();
+    });
+  });
+
+  // Listen for Frappe's login events or common error patterns
+  // login.js often calls login.route() or shows messages
+  // We can also override or proxy frappe.msgprint if needed, 
+  // but usually login.js handles specific errors by setting text in .login-content .callout
+  
+  // Since we have custom alert divs, we need to make sure they are populated.
+  // Frappe's login.js might not know about our IDs.
+  // Let's add a global listener for ajax errors as a fallback
+  $(document).ajaxComplete(function(event, xhr, settings) {
+    document.querySelectorAll('.mcal-btn.loading').forEach(btn => btn.classList.remove('loading'));
+    
+    if (xhr.status !== 200 && xhr.responseJSON && xhr.responseJSON.message) {
+      // Find active section
+      const activeSection = document.querySelector('.mcal-section.active');
+      if (activeSection) {
+        const sectionId = activeSection.id.replace('section-', '');
+        showAlert(sectionId, xhr.responseJSON.message);
+      }
+    }
+  });
+
+  // Specifically for login success/failure
+  $(document).on('login_error', function(event, message) {
+     showAlert('login', message || 'Invalid login credentials');
+  });
 </script>
 {% endblock %}

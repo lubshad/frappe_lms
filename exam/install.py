@@ -17,10 +17,64 @@ def after_install() -> None:
 	_make_lesson_chapter_optional()
 	_add_member_type_to_lms_batch_enrollment()
 	_add_course_to_lms_batch_enrollment()
-	_add_program_quizzes_to_lms_program()
+	_add_course_to_lms_batch_enrollment()
 	_add_course_group_to_lms_course()
 	_add_course_group_to_lms_question()
+	_setup_assistant_prompts()
 	frappe.db.commit()
+
+
+def _setup_assistant_prompts() -> None:
+	"""Create or update the context prompt for LMS hierarchies in frappe_assistant_core."""
+	if not frappe.db.table_exists("Prompt Template"):
+		return
+
+	prompt_id = "lms_hierarchy_context"
+	template_content = """# LMS Structure Knowledge
+
+The system uses two distinct hierarchies for organizing educational content. Use this guide to resolve ambiguity in user requests:
+
+### 1. Academic Hierarchy (Standard)
+Used for degree-style programs where a Program contains multiple Courses.
+- **Program** (`LMS Program`): Top-level degree/diploma.
+- **Course** (`LMS Course`): Specific module within the Program.
+- **Chapter** (`Course Chapter`): Section within a Course.
+- **Lesson** (`Course Lesson`): Individual learning unit.
+
+### 2. Professional/Specialized Hierarchy
+Used for certificate courses where the "Program" is the actual course and "Courses" are treated as "Subjects".
+- **Course** (Stored as `LMS Program`): The main offering.
+- **Subject** (Stored as `LMS Course`): Specific topic within that top-level program.
+- **Chapter** (`Course Chapter`): Section within a Subject.
+- **Lesson** (`Course Lesson`): Individual learning unit.
+
+### Navigation Rules
+- When a user asks about "Subjects" within a "Course", refer to Hierarchy #2.
+- When a user asks about "Courses" within a "Program", refer to Hierarchy #1.
+- "Chapters" and "Lessons" are always the bottom levels in both hierarchies."""
+
+	# Update or insert the prompt template
+	try:
+		name = frappe.db.get_value("Prompt Template", {"prompt_id": prompt_id}, "name")
+		
+		if name:
+			doc = frappe.get_doc("Prompt Template", name)
+			doc.template_content = template_content
+			doc.save(ignore_permissions=True)
+		else:
+			doc = frappe.get_doc({
+				"doctype": "Prompt Template",
+				"prompt_id": prompt_id,
+				"title": "LMS Content Hierarchy Guide",
+				"description": "Explains the two types of content hierarchies used in the LMS (Academic vs. Professional).",
+				"template_content": template_content,
+				"status": "Published",
+				"visibility": "Public",
+				"category": "documentation"
+			})
+			doc.insert(ignore_permissions=True)
+	except Exception as e:
+		frappe.log_error(f"Failed to setup assistant prompts: {str(e)}")
 
 
 def _add_reference_lesson_to_lms_question() -> None:
@@ -54,6 +108,20 @@ def _add_user_selected_program() -> None:
 				"label": "Selected Program",
 				"options": "LMS Program",
 				"insert_after": "education",
+			},
+			{
+				"fieldname": "enrolled_batch_name",
+				"fieldtype": "Data",
+				"label": "Enrolled Batch Name",
+				"read_only": 1,
+				"insert_after": "selected_program",
+			},
+			{
+				"fieldname": "enrolled_program_name",
+				"fieldtype": "Data",
+				"label": "Enrolled Program Name",
+				"read_only": 1,
+				"insert_after": "enrolled_batch_name",
 			}
 		]
 	}
@@ -267,20 +335,6 @@ def _add_course_group_to_lms_course() -> None:
 	create_custom_fields(custom_fields, ignore_validate=True)
 
 
-def _add_program_quizzes_to_lms_program() -> None:
-	"""Add program_quizzes child table field to LMS Program."""
-	custom_fields = {
-		"LMS Program": [
-			{
-				"fieldname": "program_quizzes",
-				"fieldtype": "Table",
-				"label": "Program Quizzes",
-				"options": "LMS Program Quiz",
-				"insert_after": "program_courses",
-			}
-		]
-	}
-	create_custom_fields(custom_fields, ignore_validate=True)
 
 
 def _add_course_to_lms_batch_enrollment() -> None:

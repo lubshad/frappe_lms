@@ -19,3 +19,6 @@ exam.patches.add_course_to_lms_batch_enrollment
 exam.patches.create_higher_secondary_course_groups
 exam.patches.add_course_group_to_lms_question
 exam.patches.give_moderator_permissions_to_exam_doctypes
+exam.patches.add_exam_submission_to_quiz_submission
+exam.patches.migrate_exam_programs
+exam.patches.add_marks_to_lms_question

@@ -2,6 +2,43 @@ import frappe
 from lms.lms.doctype.lms_batch_enrollment.lms_batch_enrollment import LMSBatchEnrollment
 
 class CustomLMSBatchEnrollment(LMSBatchEnrollment):
+	def validate(self) -> None:
+		self.validate_duplicate_members()
+		self.validate_course_enrollment()
+		self.update_user_details()
+
+	def on_update(self) -> None:
+		# Ensure enrollment fields are set on User during creation/update
+		self.update_user_details()
+
+	def on_trash(self) -> None:
+		# Clear enrollment fields from User on deletion
+		self.update_user_details(clear=True)
+
+	def update_user_details(self, clear: bool = False) -> None:
+		"""Update enriched metadata on User doc for easy profile display."""
+		if not self.member:
+			return
+
+		batch_title = ""
+		program_title = ""
+
+		if not clear:
+			batch_title = frappe.db.get_value("LMS Batch", self.batch, "title") or ""
+			program = frappe.db.get_value("LMS Batch", self.batch, "program")
+			if program:
+				program_title = frappe.db.get_value("LMS Program", program, "title") or ""
+
+		frappe.db.set_value(
+			"User",
+			self.member,
+			{
+				"enrolled_batch_name": batch_title,
+				"enrolled_program_name": program_title,
+			},
+			update_modified=False,
+		)
+
 	def validate_duplicate_members(self) -> None:
 		# Restrict to only one batch enrollment across all batches
 		existing_enrollment = frappe.db.get_value(

@@ -9,24 +9,18 @@ from frappe.utils.pdf import get_pdf
 class ExamSubmission(Document):
 	
 	@frappe.whitelist()
-	def get_report_html(self):
-		exam = frappe.get_cached_doc("Exam", self.exam)
-		if not exam.report_email_template:
-			frappe.throw("Please configure an Email Template on the Exam to view reports.")
-		email_template = frappe.get_doc("Email Template", exam.report_email_template)
-		return frappe.render_template(email_template.response, {"doc": self})
-		
+	def get_report_html(self) -> str:
+		if not self.report_content:
+			frappe.throw("Report content is not yet generated for this submission.")
+		return self.report_content
+
 	@frappe.whitelist()
 	def send_report_email(self) -> None:
-		exam = frappe.get_cached_doc("Exam", self.exam)
-		if not exam.report_email_template:
-			frappe.throw("Please configure an Email Template on the Exam before sending reports.")
-			
-		email_template = frappe.get_doc("Email Template", exam.report_email_template)
-		
-		# Render subject and response
-		subject = frappe.render_template(email_template.subject, {"doc": self})
-		response_html = frappe.render_template(email_template.response, {"doc": self})
+		if not self.report_content:
+			frappe.throw("Report content is not yet generated for this submission.")
+
+		subject = f"Exam Report - {self.exam_title}"
+		response_html = self.report_content
 		
 		# Generate PDF
 		pdf_content = get_pdf(response_html)

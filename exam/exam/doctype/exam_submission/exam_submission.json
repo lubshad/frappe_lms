@@ -16,6 +16,8 @@
   "passed",
   "report_sent",
   "report_sent_on",
+  "section_break_report",
+  "report_content",
   "section_break_sections",
   "sections"
  ],
@@ -98,6 +100,16 @@
    "fieldtype": "Datetime",
    "label": "Report Sent On",
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_report",
+   "fieldtype": "Section Break",
+   "label": "Report"
+  },
+  {
+   "fieldname": "report_content",
+   "fieldtype": "HTML Editor",
+   "label": "Report Content"
   },
   {
    "fieldname": "section_break_sections",

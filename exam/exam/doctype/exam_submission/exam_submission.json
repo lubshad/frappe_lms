@@ -14,6 +14,8 @@
   "total_max_marks",
   "percentage",
   "passed",
+  "report_sent",
+  "report_sent_on",
   "section_break_sections",
   "sections"
  ],
@@ -81,6 +83,20 @@
    "fieldtype": "Check",
    "in_list_view": 1,
    "label": "Passed",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "report_sent",
+   "fieldtype": "Check",
+   "label": "Report Sent",
+   "read_only": 1
+  },
+  {
+   "depends_on": "report_sent",
+   "fieldname": "report_sent_on",
+   "fieldtype": "Datetime",
+   "label": "Report Sent On",
    "read_only": 1
   },
   {

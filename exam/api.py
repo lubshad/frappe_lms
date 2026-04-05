@@ -788,6 +788,27 @@ def get_question_details(question: str) -> dict:
 
 
 @frappe.whitelist()
+def get_quiz_info(quiz_name: str) -> dict:
+    """Return quiz fields plus the current user's attempt count."""
+    quiz = frappe.get_doc("LMS Quiz", quiz_name)
+    member = frappe.session.user
+    attempt_count = frappe.db.count(
+        "LMS Quiz Submission", filters={"quiz": quiz_name, "member": member}
+    )
+    duration_seconds = (int(quiz.duration) if quiz.duration else 0) * 60
+    return {
+        "name": quiz.name,
+        "title": quiz.title,
+        "passing_score": quiz.passing_percentage,
+        "max_attempts": quiz.max_attempts,
+        "show_answers": quiz.show_answers,
+        "is_time_bound": 1 if duration_seconds > 0 else 0,
+        "duration": duration_seconds,
+        "attempt_count": attempt_count,
+    }
+
+
+@frappe.whitelist()
 def submit_quiz_result(
     quiz_name: str,
     results: list | str | None = None,
@@ -1537,6 +1558,98 @@ def get_exam_progress(exam_name: str, member: str | None = None) -> dict:
 
 
 @frappe.whitelist()
+def save_exam_attempt_draft(
+    exam_name: str,
+    answers: str | dict | None = None,
+    current_question: int = 0,
+    flagged_questions: str | list | None = None,
+    remaining_seconds: int | None = None,
+) -> dict:
+    """Persist an in-progress exam draft for the current user."""
+    from exam.exam.doctype.exam.exam import (
+        save_exam_attempt_draft as doc_save_exam_attempt_draft,
+    )
+
+    return doc_save_exam_attempt_draft(
+        exam_name,
+        answers=answers,
+        current_question=current_question,
+        flagged_questions=flagged_questions,
+        remaining_seconds=remaining_seconds,
+    )
+
+
+@frappe.whitelist()
+def get_exam_attempt_draft(exam_name: str) -> dict | None:
+    """Fetch a previously saved exam draft for the current user."""
+    from exam.exam.doctype.exam.exam import (
+        get_exam_attempt_draft as doc_get_exam_attempt_draft,
+    )
+
+    return doc_get_exam_attempt_draft(exam_name)
+
+
+@frappe.whitelist()
+def submit_exam(exam_name: str, all_results: str | dict) -> dict:
+    """Submit the full exam in one call."""
+    from exam.exam.doctype.exam.exam import submit_exam as doc_submit_exam
+
+    return doc_submit_exam(exam_name, all_results)
+
+
+@frappe.whitelist()
+def get_exam_submissions(limit: int = 100, offset: int = 0) -> list:
+    """Return a list of multiple exam submissions for the current student."""
+    member = frappe.session.user
+
+    submissions_list = frappe.get_all(
+        "Exam Submission",
+        filters={"member": member},
+        fields=[
+            "name as submission_id",
+            "exam as exam_name",
+            "exam_title",
+            "total_score",
+            "total_max_marks as total_max",
+            "percentage",
+            "passed",
+            "creation as last_submitted_at"
+        ],
+        order_by="creation desc",
+        limit_page_length=cint(limit),
+        limit_start=cint(offset),
+    )
+
+    for sub in submissions_list:
+        sub_sections = frappe.get_all(
+            "Exam Submission Section",
+            filters={"parent": sub.submission_id},
+            fields=["submission", "quiz", "score", "max_marks", "course_group"],
+            order_by="idx asc"
+        )
+        
+        for s in sub_sections:
+            if s.quiz:
+                s["section_title"] = frappe.db.get_value("LMS Quiz", s.quiz, "title") or s.quiz
+            s["percentage"] = (s.score / s.max_marks * 100) if s.get("max_marks") else 0.0
+            s["submitted_at"] = sub.last_submitted_at
+
+        sub["section_submissions"] = sub_sections
+        sub["total_sections"] = len(sub_sections)
+        sub["completed_sections"] = len([s for s in sub_sections if s.get("submission")])
+        
+        exam_info = frappe.db.get_value("Exam", sub.exam_name, ["passing_percentage", "show_results"], as_dict=True)
+        if exam_info:
+             sub["passing_percentage"] = exam_info.passing_percentage
+             sub["show_results"] = exam_info.show_results
+        else:
+             sub["passing_percentage"] = 0
+             sub["show_results"] = 0
+
+    return submissions_list
+
+
+@frappe.whitelist()
 def submit_section(exam_name: str, quiz_name: str, results: str) -> dict:
     """Submit a single section (quiz) of an exam. Delegates to LMS submit_quiz."""
     if not frappe.db.exists("Exam", exam_name):
@@ -1601,6 +1714,116 @@ def get_exams(search: str = "", limit: int = 50, start: int = 0) -> list:
         exam["sections"] = sorted(exam["sections"], key=lambda s: s["sequence"])
         exam["section_count"] = len(exam["sections"])
     
+    return exams
+
+
+@frappe.whitelist()
+def get_assigned_exams(search: str = "", limit: int = 50, start: int = 0) -> list:
+    """Return list of exams assigned to the student's enrolled programs/courses."""
+    user = frappe.session.user
+    
+    # Administrator sees everything
+    if user == "Administrator":
+        return get_exams(search, limit, start)
+
+    # 1. Identify enrolled programs and courses (Reusing logic from get_assigned_quizzes)
+    direct_courses = frappe.get_all("LMS Enrollment", filters={"member": user}, pluck="course")
+    enrolled_batches = frappe.get_all("LMS Batch Enrollment", filters={"member": user}, pluck="batch")
+    
+    all_course_names = set(direct_courses)
+    all_program_names = set()
+    
+    if enrolled_batches:
+        batches = frappe.get_all("LMS Batch", filters={"name": ["in", enrolled_batches]}, fields=["name", "program"])
+        for b in batches:
+            if b.program:
+                all_program_names.add(b.program)
+        
+        if all_program_names:
+            program_courses = frappe.get_all("LMS Program Course", filters={"parent": ["in", list(all_program_names)]}, pluck="course")
+            for c in program_courses:
+                if c:
+                    all_course_names.add(c)
+
+    user_doc = frappe.get_doc("User", user)
+    selected_program = user_doc.get("selected_program")
+    if selected_program:
+        all_program_names.add(selected_program)
+        program_courses = frappe.get_all("LMS Program Course", filters={"parent": selected_program}, pluck="course")
+        for c in program_courses:
+            if c:
+                all_course_names.add(c)
+
+    # 2. Find Course Groups containing user's courses
+    course_groups = []
+    if all_course_names:
+        course_groups = frappe.get_all(
+            "Course Group Course",
+            filters={"course": ["in", list(all_course_names)]},
+            pluck="parent"
+        )
+
+    # 3. Build Filters for Exam
+    filters = {}
+    if search:
+        filters["title"] = ["like", f"%{search}%"]
+
+    or_filters = []
+    if all_program_names:
+        # Filter by assigned programs (child table Exam Program)
+        exam_names_by_program = frappe.get_all(
+            "Exam Program",
+            filters={"program": ["in", list(all_program_names)]},
+            pluck="parent"
+        )
+        if exam_names_by_program:
+            or_filters.append(["name", "in", exam_names_by_program])
+
+    if course_groups:
+        or_filters.append(["course_group", "in", course_groups])
+
+    # If no enrollments and not admin, return empty
+    if not or_filters:
+        return []
+
+    exams = frappe.get_all(
+        "Exam",
+        filters=filters,
+        or_filters=or_filters,
+        fields=["name", "title", "passing_percentage", "negative_marking", "total_marks"],
+        limit_start=cint(start),
+        limit_page_length=cint(limit),
+        order_by="creation desc"
+    )
+
+    # 4. Hydrate Exam details (Reusing logic from get_exams)
+    for exam in exams:
+        doc = frappe.get_doc("Exam", exam.name)
+        exam["sections"] = []
+        for row in doc.sections:
+            quiz = frappe.db.get_value(
+                "LMS Quiz",
+                row.quiz,
+                ["duration", "total_marks", "max_attempts", "shuffle_questions"],
+                as_dict=True
+            )
+            exam["sections"].append({
+                "quiz": row.quiz,
+                "quiz_title": row.quiz_title,
+                "section_title": row.section_title,
+                "course_group": row.course_group,
+                "course_group_title": row.course_group_title,
+                "duration": quiz.duration if quiz else 0,
+                "total_marks": quiz.total_marks if quiz else 0,
+                "passing_percentage": row.passing_percentage,
+                "sequence": row.sequence,
+                "mandatory": row.mandatory,
+                "max_attempts": quiz.max_attempts if quiz else 1,
+                "shuffle_questions": quiz.shuffle_questions if quiz else 0,
+            })
+        exam["sections"] = sorted(exam["sections"], key=lambda s: s["sequence"])
+        exam["section_count"] = len(exam["sections"])
+
     return exams
 
 

@@ -5,6 +5,7 @@ import json
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.utils import cint
 
 
 class Exam(Document):
@@ -31,6 +32,21 @@ class Exam(Document):
 
 		# Sort sections by sequence
 		self.sections = sorted(self.sections, key=lambda r: r.sequence)
+
+
+def _draft_cache_key(exam_name: str, member: str) -> str:
+	return f"exam_attempt_draft::{member}::{exam_name}"
+
+
+def _parse_json_payload(value, default):
+	if value is None:
+		return default
+	if isinstance(value, str):
+		value = value.strip()
+		if not value:
+			return default
+		return json.loads(value)
+	return value
 
 
 @frappe.whitelist()
@@ -63,6 +79,17 @@ def get_exam(exam_name: str) -> dict:
 			"shuffle_questions": quiz.shuffle_questions,
 		})
 
+	member = frappe.session.user
+	attempt_count = frappe.db.count(
+		"Exam Submission", filters={"exam": exam_name, "member": member}
+	)
+
+	max_attempts_values = [s["max_attempts"] for s in sections if s.get("max_attempts")]
+	if max_attempts_values:
+		max_attempts = min(max_attempts_values)
+	else:
+		max_attempts = 0
+
 	return {
 		"name": exam.name,
 		"title": exam.title,
@@ -72,6 +99,8 @@ def get_exam(exam_name: str) -> dict:
 		"marks_to_cut": exam.marks_to_cut,
 		"show_results": exam.show_results,
 		"sections": sections,
+		"attempt_count": attempt_count,
+		"max_attempts": max_attempts,
 	}
 
 
@@ -103,12 +132,14 @@ def get_exam_progress(exam_name: str, member: str = None) -> dict:
 			total_score += best.score
 			total_max += best.score_out_of
 
+		quiz_title = frappe.db.get_value("LMS Quiz", row.quiz, "title") or row.quiz
 		section_results.append({
 			"quiz": row.quiz,
-			"section_title": row.section_title,
+			"section_title": row.section_title or quiz_title,
 			"course_group": row.course_group,
 			"course_group_title": row.course_group_title,
 			"submitted": bool(best),
+			"submission": best.name if best else None,
 			"score": best.score if best else 0,
 			"score_out_of": best.score_out_of if best else 0,
 			"percentage": best.percentage if best else 0,
@@ -153,13 +184,13 @@ def submit_section(exam_name: str, quiz_name: str, results: str) -> dict:
 
 
 @frappe.whitelist()
-def submit_exam(exam_name: str, all_results: str) -> dict:
+def submit_exam(exam_name: str, all_results: str | dict) -> dict:
 	"""Unified submission for all sections of an exam."""
 	if not frappe.db.exists("Exam", exam_name):
 		frappe.throw(_("Exam not found"))
 
 	exam = frappe.get_doc("Exam", exam_name)
-	results_map = json.loads(all_results)
+	results_map = _parse_json_payload(all_results, {})
 	member = frappe.session.user
 
 	from lms.lms.doctype.lms_quiz.lms_quiz import submit_quiz
@@ -222,6 +253,8 @@ def submit_exam(exam_name: str, all_results: str) -> dict:
 		if row.submission:
 			frappe.db.set_value("LMS Quiz Submission", row.submission, "exam_submission", submission.name)
 
+	frappe.cache().delete_value(_draft_cache_key(exam_name, member))
+
 	return {
 		"name": submission.name,
 		"total_score": total_score,
@@ -229,6 +262,65 @@ def submit_exam(exam_name: str, all_results: str) -> dict:
 		"percentage": percentage,
 		"passed": passed,
 		"sections": sections_summary
+	}
+
+
+@frappe.whitelist()
+def save_exam_attempt_draft(
+	exam_name: str,
+	answers: str | dict | None = None,
+	current_question: int = 0,
+	flagged_questions: str | list | None = None,
+	remaining_seconds: int | None = None,
+) -> dict:
+	"""Persist an in-progress exam attempt draft in cache for the current user."""
+	if not frappe.db.exists("Exam", exam_name):
+		frappe.throw(_("Exam not found"))
+
+	member = frappe.session.user
+	parsed_answers = _parse_json_payload(answers, {})
+	parsed_flags = _parse_json_payload(flagged_questions, [])
+
+	draft = {
+		"exam_name": exam_name,
+		"member": member,
+		"answers": parsed_answers,
+		"current_question": cint(current_question),
+		"flagged_questions": parsed_flags,
+		"remaining_seconds": None if remaining_seconds in (None, "") else cint(remaining_seconds),
+		"modified": frappe.utils.now(),
+	}
+
+	frappe.cache().set_value(
+		_draft_cache_key(exam_name, member),
+		json.dumps(draft),
+		expires_in_sec=60 * 60 * 24 * 7,
+	)
+	return {"saved": True, "modified": draft["modified"]}
+
+
+@frappe.whitelist()
+def get_exam_attempt_draft(exam_name: str) -> dict | None:
+	"""Return a saved exam attempt draft for the current user if one exists."""
+	if not frappe.db.exists("Exam", exam_name):
+		frappe.throw(_("Exam not found"))
+
+	member = frappe.session.user
+	cached = frappe.cache().get_value(_draft_cache_key(exam_name, member))
+	if not cached:
+		return None
+
+	draft = _parse_json_payload(cached, None)
+	if not draft:
+		return None
+
+	return {
+		"exam_name": exam_name,
+		"answers": draft.get("answers") or {},
+		"current_question": cint(draft.get("current_question") or 0),
+		"flagged_questions": draft.get("flagged_questions") or [],
+		"remaining_seconds": draft.get("remaining_seconds"),
+		"modified": draft.get("modified"),
 	}
 
 

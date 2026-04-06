@@ -1555,7 +1555,8 @@ def get_exam_submissions(limit: int = 100, offset: int = 0) -> list:
             "total_max_marks as total_max",
             "percentage",
             "passed",
-            "creation as last_submitted_at"
+            "creation as last_submitted_at",
+            "report_content as is_report_generated"
         ],
         order_by="creation desc",
         limit_page_length=cint(limit),
@@ -1563,6 +1564,7 @@ def get_exam_submissions(limit: int = 100, offset: int = 0) -> list:
     )
 
     for sub in submissions_list:
+        sub["is_report_generated"] = 1 if sub.get("is_report_generated") else 0
         sub_sections = frappe.get_all(
             "Exam Submission Section",
             filters={"parent": sub.submission_id},
@@ -1711,6 +1713,17 @@ def get_assigned_exams(search: str = "", limit: int = 50, start: int = 0) -> lis
         filters["title"] = ["like", f"%{search}%"]
 
     or_filters = []
+
+    # 3.1 Include exams with NO assigned programs (Global Exams)
+    # These are exams that don't have any entry in the "Exam Program" child table
+    exams_with_programs = frappe.get_all("Exam Program", pluck="parent")
+    if exams_with_programs:
+        or_filters.append(["name", "not in", list(set(exams_with_programs))])
+    else:
+        # If no exams have program restrictions, they are all technically "global" or unassigned
+        or_filters.append(["name", "is", "set"])
+
+    # 3.2 Include exams assigned to user's programs
     if all_program_names:
         # Filter by assigned programs (child table Exam Program)
         exam_names_by_program = frappe.get_all(
@@ -1721,12 +1734,9 @@ def get_assigned_exams(search: str = "", limit: int = 50, start: int = 0) -> lis
         if exam_names_by_program:
             or_filters.append(["name", "in", exam_names_by_program])
 
+    # 3.3 Include exams assigned to user's course groups
     if course_groups:
         or_filters.append(["course_group", "in", course_groups])
-
-    # If no enrollments and not admin, return empty
-    if not or_filters:
-        return []
 
     exams = frappe.get_all(
         "Exam",

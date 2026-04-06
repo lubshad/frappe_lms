@@ -7,7 +7,7 @@ from frappe.custom.doctype.property_setter.property_setter import make_property_
 def after_install() -> None:
 	"""Apply all exam app customizations on fresh install."""
 	_add_reference_lesson_to_lms_question()
-	_add_user_selected_program()
+
 	_make_instructor_optional_in_batch()
 	_add_program_to_lms_batch()
 	_change_lms_question_field_types()
@@ -94,48 +94,7 @@ def _add_reference_lesson_to_lms_question() -> None:
 	create_custom_fields(custom_fields)
 
 
-def _add_user_selected_program() -> None:
-	"""Add selected_program custom field to User doctype."""
-	# Cleanup any previous partial attempts
-	frappe.db.delete("Custom Field", {"dt": "User", "fieldname": "exam_tab"})
-	frappe.db.delete("Custom Field", {"dt": "User", "fieldname": "exam_section"})
 
-	custom_fields: dict[str, list[dict]] = {
-		"User": [
-			{
-				"fieldname": "selected_program",
-				"fieldtype": "Link",
-				"label": "Selected Program",
-				"options": "LMS Program",
-				"insert_after": "education",
-			},
-			{
-				"fieldname": "enrolled_batch_name",
-				"fieldtype": "Data",
-				"label": "Enrolled Batch Name",
-				"read_only": 1,
-				"insert_after": "selected_program",
-			},
-			{
-				"fieldname": "enrolled_program_name",
-				"fieldtype": "Data",
-				"label": "Enrolled Program Name",
-				"read_only": 1,
-				"insert_after": "enrolled_batch_name",
-			}
-		]
-	}
-	create_custom_fields(custom_fields, ignore_validate=True)
-
-	frappe.make_property_setter(
-		{
-			"doctype": "User",
-			"fieldname": "onboarding_status",
-			"property": "insert_after",
-			"value": "selected_program",
-			"property_type": "Data",
-		}
-	)
 
 
 def _change_lms_question_field_types() -> None:

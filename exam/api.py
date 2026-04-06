@@ -102,37 +102,7 @@ def get_csrf_token() -> str:
 
 
 
-@frappe.whitelist()
-def get_program_courses() -> list[dict]:
-    """
-    Returns a list of published courses associated with a specific program.
-    Used by the Flutter app to show courses filtered by user's selected program.
-    """
-    user = frappe.get_doc("User", frappe.session.user)
-    program_name = user.get("selected_program")
 
-    if not program_name:
-        return []
-
-    program_courses = frappe.get_all(
-        "LMS Program Course",
-        filters={"parent": program_name},
-        pluck="course"
-    )
-
-    if not program_courses:
-        return []
-
-    courses = frappe.get_all(
-        "LMS Course",
-        filters={
-            "name": ["in", program_courses],
-            "published": 1
-        },
-        fields=["name", "title", "description", "short_introduction", "image", "category", "rating", "lessons", "enrollments"]
-    )
-
-    return courses
 
 @frappe.whitelist()
 def get_student_courses() -> list[dict]:
@@ -273,18 +243,6 @@ def get_assigned_quizzes(search: str = "", limit: int | str = 50, offset: int | 
             except Exception:
                 pass
 
-    # 3. Also check if the user has a selected program
-    user_doc = frappe.get_doc("User", user)
-    selected_program = user_doc.get("selected_program")
-    if selected_program:
-        program_courses = frappe.get_all(
-            "LMS Program Course",
-            filters={"parent": selected_program},
-            pluck="course"
-        )
-        for c in program_courses:
-            if c:
-                all_course_names.add(c)
 
     # 4. Get quizzes linked to these courses
     # Quizzes can be linked directly to a course or to a lesson within a course
@@ -1192,23 +1150,7 @@ def duplicate_chapter_with_children(old_chapter):
     return new_chapter
 
 
-def clear_user_selected_program(doc, method):
-    """
-    Clears the selected_program field on User when a program is deleted.
-    Called when an LMS Program is deleted to nullify selected_program 
-    on the User so that no dangling links are left.
-    """
-    frappe.db.sql(
-        "update tabUser set selected_program = null where selected_program = %s", doc.name
-    )
-    frappe.db.sql(
-        """
-        UPDATE `tabUser`
-        SET `selected_program` = NULL
-        WHERE `selected_program` = %s
-        """,
-        (doc.name,),
-    )
+
 
 
 @frappe.whitelist()
@@ -1857,3 +1799,55 @@ def get_quizzes_list(
         quiz["question_count"] = frappe.db.count("LMS Quiz Question", {"parent": quiz.name})
 
     return quizzes
+
+
+@frappe.whitelist()
+def get_dashboard_stats() -> dict:
+    """
+    Returns aggregated dashboard statistics for the LMS Admin app.
+    Includes counts for all major doctypes and recent exam submissions.
+    """
+    counts: dict[str, int] = {
+        "programs": frappe.db.count("LMS Program"),
+        "courses": frappe.db.count("LMS Course"),
+        "chapters": frappe.db.count("Course Chapter"),
+        "lessons": frappe.db.count("Course Lesson"),
+        "questions": frappe.db.count("LMS Question"),
+        "quizzes": frappe.db.count("LMS Quiz"),
+        "exams": frappe.db.count("Exam"),
+        "exam_submissions": frappe.db.count("Exam Submission"),
+        "students": frappe.db.count("LMS Batch Enrollment"),
+        "batches": frappe.db.count("LMS Batch"),
+        "live_classes": frappe.db.count("LMS Live Class"),
+        "instructors": frappe.db.count("LMS Batch Enrollment", {"member_type": "Instructor"}),
+    }
+
+    # Recent exam submissions
+    recent_submissions = frappe.get_all(
+        "Exam Submission",
+        fields=[
+            "name",
+            "member",
+            "member_name",
+            "exam",
+            "exam_title",
+            "total_score",
+            "total_max_marks",
+            "percentage",
+            "passed",
+            "creation",
+        ],
+        order_by="creation desc",
+        limit_page_length=5,
+    )
+
+    # Pass / fail breakdown
+    pass_count = frappe.db.count("Exam Submission", {"passed": 1})
+    fail_count = frappe.db.count("Exam Submission", {"passed": 0})
+
+    return {
+        "counts": counts,
+        "recent_submissions": recent_submissions,
+        "pass_count": pass_count,
+        "fail_count": fail_count,
+    }

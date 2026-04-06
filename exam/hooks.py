@@ -140,10 +140,6 @@ after_install = "exam.install.after_install"
 # Hook on document methods and events
 
 doc_events = {
-	"LMS Program": {
-		"on_trash": "exam.api.clear_user_selected_program"
-	}
-
 
 }
 

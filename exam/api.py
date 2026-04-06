@@ -1861,3 +1861,43 @@ def get_dashboard_stats() -> dict:
         "pass_count": pass_count,
         "fail_count": fail_count,
     }
+
+@frappe.whitelist()
+def get_student_dashboard_metrics() -> dict:
+    """
+    Returns dashboard metrics for the student app.
+    """
+    user = frappe.session.user
+    
+    submissions = frappe.get_all(
+        "LMS Quiz Submission",
+        filters={"member": user},
+        fields=["percentage"]
+    )
+    
+    total_exams = len(submissions)
+    
+    if total_exams == 0:
+        return {
+            "total_exams": 0,
+            "average_score": "0%",
+            "best_score": "0%"
+        }
+        
+    percentages = [s.percentage for s in submissions if s.percentage is not None]
+    
+    if not percentages:
+        return {
+            "total_exams": total_exams,
+            "average_score": "0%",
+            "best_score": "0%"
+        }
+        
+    best_score = max(percentages)
+    average_score = sum(percentages) / len(percentages)
+    
+    return {
+        "total_exams": total_exams,
+        "average_score": f"{round(average_score)}%",
+        "best_score": f"{round(best_score)}%"
+    }

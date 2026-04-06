@@ -20,6 +20,9 @@ class CustomLMSBatchEnrollment(LMSBatchEnrollment):
 		if not self.member:
 			return
 
+		if not frappe.db.has_column("User", "enrolled_batch_name"):
+			return
+
 		batch_title = ""
 		program_title = ""
 

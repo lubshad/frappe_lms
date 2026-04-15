@@ -18,7 +18,7 @@ echo "Sync completed! Running bench migrate..."
 
 ssh -i $IDENTITY_FILE $SERVER "
 cd /home/frappe/frappe-bench
-./env/bin/pip install -r apps/exam/requirements.txt || true
+./env/bin/pip install -e apps/exam || true
 bench --site mcalfrappe.coreaxissolutions.in migrate
 bench restart
 "

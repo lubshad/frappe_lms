@@ -1,0 +1,21 @@
+{
+ "app": "lms_custom",
+ "bg_color": "blue",
+ "creation": "2026-04-23 06:46:49.000000",
+ "docstatus": 0,
+ "doctype": "Desktop Icon",
+ "hidden": 0,
+ "icon_type": "Link",
+ "idx": 0,
+ "label": "Exam",
+ "link_to": "Exam",
+ "link_type": "Workspace Sidebar",
+ "modified": "2026-04-23 08:00:00.000000",
+ "modified_by": "Administrator",
+ "name": "Exam",
+ "owner": "Administrator",
+ "restrict_removal": 0,
+ "roles": [],
+ "sidebar": "Exam",
+ "standard": 1
+}

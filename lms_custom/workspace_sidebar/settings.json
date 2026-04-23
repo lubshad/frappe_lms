@@ -1,0 +1,29 @@
+{
+ "app": "lms_custom",
+ "creation": "2026-04-23 15:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Workspace Sidebar",
+ "header_icon": "settings",
+ "idx": 0,
+ "items": [
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "settings",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "LMS Custom Settings",
+   "link_to": "LMS Custom Settings",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-04-23 15:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Lms Custom",
+ "name": "Settings",
+ "owner": "Administrator",
+ "standard": 1,
+ "title": "Settings"
+}

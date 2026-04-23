@@ -1,0 +1,89 @@
+{
+ "app": "lms_custom",
+ "creation": "2026-04-23 06:46:49.000000",
+ "docstatus": 0,
+ "doctype": "Workspace Sidebar",
+ "header_icon": "graduation-cap",
+ "idx": 0,
+ "items": [
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "award",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "LMS Program",
+   "link_to": "LMS Program",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "book-open",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "LMS Course",
+   "link_to": "LMS Course",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "bookmark",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Course Chapter",
+   "link_to": "Course Chapter",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "file-text",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Course Lesson",
+   "link_to": "Course Lesson",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "layers",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Course Group",
+   "link_to": "Course Group",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "users",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "LMS Batch",
+   "link_to": "LMS Batch",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-04-23 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Lms Custom",
+ "name": "Academy",
+ "owner": "Administrator",
+ "standard": 1,
+ "title": "Academy"
+}

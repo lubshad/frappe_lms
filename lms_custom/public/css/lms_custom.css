@@ -1,0 +1,54 @@
+body.exam-full-width {
+	--page-max-width: none;
+}
+
+body.exam-full-width .layout-main-section-wrapper,
+body.exam-full-width .layout-main-section,
+body.exam-full-width .page-body,
+body.exam-full-width .desk-page,
+body.exam-full-width .editor-js-container,
+body.exam-full-width .form-dashboard-section {
+	max-width: none;
+	width: 100%;
+}
+
+body.lms-desktop-home {
+	background:
+		radial-gradient(circle at top left, rgba(13, 148, 136, 0.18), transparent 28%),
+		radial-gradient(circle at bottom right, rgba(245, 158, 11, 0.16), transparent 22%),
+		linear-gradient(90deg, #f3fbfb 0%, #ffffff 52%, #f7fcff 100%);
+}
+
+body.lms-desktop-home .layout-main-section-wrapper {
+	background: transparent;
+}
+
+body.lms-desktop-home .desktop-wrapper {
+	min-height: calc(100vh - var(--navbar-height));
+	background:
+		radial-gradient(circle at top right, rgba(13, 148, 136, 0.08), transparent 24%),
+		radial-gradient(circle at 12% 82%, rgba(245, 158, 11, 0.1), transparent 18%);
+}
+
+body.lms-desktop-home .navbar-container {
+	background: rgba(255, 255, 255, 0.52);
+	backdrop-filter: blur(18px);
+	border-bottom: 1px solid rgba(26, 77, 110, 0.08);
+}
+
+body.lms-desktop-home .desktop-icon {
+	background: rgba(255, 255, 255, 0.42);
+	border: 1px solid rgba(26, 77, 110, 0.08);
+	box-shadow: 0 18px 42px rgba(17, 64, 89, 0.08);
+	backdrop-filter: blur(16px);
+}
+
+body.lms-desktop-home .desktop-icon:hover {
+	background: rgba(255, 255, 255, 0.62);
+	transform: translateY(-2px);
+	transition:
+		transform 0.18s ease,
+		background-color 0.18s ease,
+		box-shadow 0.18s ease;
+	box-shadow: 0 24px 48px rgba(17, 64, 89, 0.12);
+}

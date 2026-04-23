@@ -1,0 +1,77 @@
+{
+ "app": "lms_custom",
+ "creation": "2026-04-23 06:46:49.000000",
+ "docstatus": 0,
+ "doctype": "Workspace Sidebar",
+ "header_icon": "clipboard-list",
+ "idx": 0,
+ "items": [
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "clipboard-list",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Exam",
+   "link_to": "Exam",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "file-check",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Exam Submission",
+   "link_to": "Exam Submission",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "list-checks",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "LMS Quiz",
+   "link_to": "LMS Quiz",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "help",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "LMS Question",
+   "link_to": "LMS Question",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "clipboard-check",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "LMS Quiz Submission",
+   "link_to": "LMS Quiz Submission",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-04-23 14:50:00.000000",
+ "modified_by": "Administrator",
+ "module": "Lms Custom",
+ "name": "Exam",
+ "owner": "Administrator",
+ "standard": 1,
+ "title": "Exam"
+}

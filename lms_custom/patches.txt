@@ -1,0 +1,26 @@
+[pre_model_sync]
+# Patches added in this section will be executed before doctypes are migrated
+# Read docs to understand patches: https://docs.frappe.io/framework/user/en/database-migrations
+lms_custom.patches.change_lms_question_field_types
+lms_custom.patches.change_lms_quiz_result_field_types
+
+[post_model_sync]
+# Patches added in this section will be executed after doctypes are migrated
+lms_custom.patches.add_user_selected_program
+lms_custom.patches.unhide_lesson_youtube_field
+lms_custom.patches.add_reference_course_lesson_to_lms_question
+lms_custom.patches.migrate_mcal_lms_data
+lms_custom.patches.migrate_mcal_quiz_data
+lms_custom.patches.make_lesson_chapter_optional
+lms_custom.patches.make_instructor_optional_in_batch
+lms_custom.patches.add_program_to_lms_batch
+lms_custom.patches.add_member_type_to_lms_batch_enrollment
+lms_custom.patches.add_course_to_lms_batch_enrollment
+lms_custom.patches.create_higher_secondary_course_groups
+lms_custom.patches.add_course_group_to_lms_question
+lms_custom.patches.give_moderator_permissions_to_exam_doctypes
+lms_custom.patches.add_exam_submission_to_quiz_submission
+lms_custom.patches.migrate_exam_programs
+lms_custom.patches.add_marks_to_lms_question
+lms_custom.patches.create_aptitude_test_course_groups
+lms_custom.patches.create_aptitude_test_email_template

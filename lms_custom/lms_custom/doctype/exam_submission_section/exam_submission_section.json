@@ -1,0 +1,76 @@
+{
+ "actions": [],
+ "creation": "2026-04-03 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "quiz",
+  "submission",
+  "course_group",
+  "course_group_title",
+  "score",
+  "max_marks"
+ ],
+ "fields": [
+  {
+   "fieldname": "quiz",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Quiz",
+   "options": "LMS Quiz",
+   "reqd": 1
+  },
+  {
+   "fieldname": "submission",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Submission",
+   "options": "LMS Quiz Submission",
+   "read_only": 1
+  },
+  {
+   "fieldname": "course_group",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Course Group",
+   "options": "Course Group",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "course_group.title",
+   "fieldname": "course_group_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Course Group Title",
+   "read_only": 1
+  },
+  {
+   "fieldname": "score",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Score",
+   "non_negative": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "max_marks",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Max Marks",
+   "non_negative": 1,
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "modified": "2026-04-03 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Lms Custom",
+ "name": "Exam Submission Section",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

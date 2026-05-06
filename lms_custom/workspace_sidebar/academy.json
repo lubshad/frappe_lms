@@ -69,17 +69,17 @@
   {
    "child": 0,
    "collapsible": 1,
-   "icon": "users",
+   "icon": "folder",
    "indent": 0,
    "keep_closed": 0,
-   "label": "LMS Batch",
-   "link_to": "LMS Batch",
+   "label": "Contents",
+   "link_to": "Vimeo Folder",
    "link_type": "DocType",
    "show_arrow": 0,
    "type": "Link"
   }
  ],
- "modified": "2026-04-23 09:00:00.000000",
+ "modified": "2026-04-24 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "Lms Custom",
  "name": "Academy",

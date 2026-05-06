@@ -4,11 +4,15 @@ frappe.ui.form.on("LMS Custom Settings", {
 			frm.events.run_setup(frm, "create_aptitude");
 		}, __("Setup Scripts"));
 
-		frm.add_custom_button(__("Create Higher Secondary Course Groups"), () => {
+		frm.add_custom_button(__("Setup Higher Secondary Entrance Courses"), () => {
 			frm.events.run_setup(frm, "create_higher_secondary");
 		}, __("Setup Scripts"));
 
-		frm.add_custom_button(__("Chartered Accounts Course Groups"), () => {
+		frm.add_custom_button(__("Create Higher Secondary Entrance Course Groups"), () => {
+			frm.events.run_setup(frm, "create_higher_secondary_course_groups");
+		}, __("Setup Scripts"));
+
+		frm.add_custom_button(__("Setup CA Courses"), () => {
 			frm.events.run_setup(frm, "create_professional");
 		}, __("Setup Scripts"));
 	},

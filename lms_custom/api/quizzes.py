@@ -1,6 +1,7 @@
 import json
 
 import frappe
+from frappe import _
 from frappe.utils import cint, cstr, strip_html
 from fuzzywuzzy import fuzz
 
@@ -194,6 +195,52 @@ def get_question_details(question: str) -> dict:
 		if question_dict.get(field):
 			question_dict[field] = expand_relative_urls(question_dict[field], base_url)
 	return question_dict
+
+
+@frappe.whitelist()
+def delete_question(question: str) -> None:
+	if not question or not question.strip():
+		frappe.throw(_("Question is required"))
+
+	question_name = question.strip()
+	if not frappe.db.exists("LMS Question", question_name):
+		frappe.throw(
+			_("Question {0} not found").format(frappe.bold(question_name)),
+			frappe.DoesNotExistError,
+		)
+
+	linked_rows = frappe.get_all(
+		"LMS Quiz Question",
+		filters={"question": question_name},
+		fields=["parent"],
+		limit_page_length=0,
+	)
+	linked_quiz_names = sorted({row.parent for row in linked_rows if row.parent})
+	if linked_quiz_names:
+		quiz_titles = frappe.get_all(
+			"LMS Quiz",
+			filters={"name": ["in", linked_quiz_names]},
+			fields=["name", "title"],
+			limit_page_length=0,
+		)
+		title_by_name = {quiz.name: quiz.title for quiz in quiz_titles}
+		linked_quiz_labels = [title_by_name.get(name) or name for name in linked_quiz_names]
+		preview = ", ".join(linked_quiz_labels[:3])
+		if len(linked_quiz_labels) > 3:
+			preview = _("{0}, and {1} more").format(preview, len(linked_quiz_labels) - 3)
+
+		frappe.throw(
+			_(
+				"This question is used in {0} quiz(es): {1}. "
+				"Remove it from those quizzes before deleting it."
+			).format(
+				len(linked_quiz_labels),
+				preview,
+			)
+		)
+
+	frappe.delete_doc("LMS Question", question_name)
+	frappe.db.commit()
 
 
 @frappe.whitelist()

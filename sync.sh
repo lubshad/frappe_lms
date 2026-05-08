@@ -2,15 +2,21 @@
 
 set -euo pipefail
 
-SERVER="frappe@mcalfrappe.coreaxissolutions.in"
-IDENTITY_FILE="personal"
-BENCH_DIR="/home/frappe/frappe-bench"
 APP_NAME="lms_custom"
-REMOTE_DIR="$BENCH_DIR/apps/$APP_NAME"
-SITE="mcalfrappe.coreaxissolutions.in"
 
 LOCAL_APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-IDENTITY_PATH="$LOCAL_APP_DIR/$IDENTITY_FILE"
+TENANT_CONFIG="$LOCAL_APP_DIR/deploy-tenants.conf"
+
+show_usage() {
+	echo "Usage: $0 TENANT"
+	echo ""
+	echo "Tenants:"
+	if declare -F available_tenants >/dev/null 2>&1; then
+		available_tenants | sed 's/^/  /'
+	else
+		echo "  mcal"
+	fi
+}
 
 _require_command() {
 	local command_name="$1"
@@ -29,11 +35,53 @@ _require_path() {
 	fi
 }
 
+_resolve_identity_path() {
+	local identity_file="$1"
+	if [[ "$identity_file" = /* ]]; then
+		echo "$identity_file"
+	else
+		echo "$LOCAL_APP_DIR/$identity_file"
+	fi
+}
+
+if [ ! -f "$TENANT_CONFIG" ]; then
+	echo "Tenant config not found: $TENANT_CONFIG" >&2
+	exit 1
+fi
+
+# shellcheck source=/dev/null
+source "$TENANT_CONFIG"
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+	show_usage
+	exit 0
+fi
+
+if [ "$#" -ne 1 ]; then
+	echo "Tenant is required." >&2
+	show_usage >&2
+	exit 1
+fi
+
+TENANT="$1"
+
+if ! load_tenant_config "$TENANT"; then
+	echo "Unknown or unconfigured tenant: $TENANT" >&2
+	show_usage >&2
+	exit 1
+fi
+
+SERVER="$SERVER_USER@$SERVER_HOST"
+REMOTE_DIR="$BENCH_DIR/apps/$APP_NAME"
+IDENTITY_PATH="$(_resolve_identity_path "$IDENTITY_FILE")"
+
 echo "Validating local setup..."
 _require_command rsync
 _require_command ssh
 _require_path "$IDENTITY_PATH" "SSH identity file"
 _require_path "$LOCAL_APP_DIR" "Local app directory"
+
+echo "Deploying $APP_NAME for tenant=$TENANT site=$SITE server=$SERVER"
 
 echo "Ensuring remote app directory exists..."
 ssh -i "$IDENTITY_PATH" "$SERVER" <<EOF

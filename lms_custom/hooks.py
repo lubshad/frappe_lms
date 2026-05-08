@@ -8,7 +8,7 @@ app_license = "mit"
 # Apps
 # ------------------
 
-required_apps = ["lms", "flutter_utils", "frappe_vimeo"]
+required_apps = ["lms", "flutter_utils", "frappe_vimeo", "frappe_sendgrid"]
 
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [

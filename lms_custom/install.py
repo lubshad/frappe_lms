@@ -2,6 +2,7 @@ import frappe
 import json
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 from frappe.custom.doctype.property_setter.property_setter import make_property_setter
+from lms_custom.patches.add_user_selected_program import execute as add_user_selected_program
 
 
 def after_install() -> None:
@@ -20,6 +21,7 @@ def after_install() -> None:
 	_add_course_to_lms_batch_enrollment()
 	_add_course_group_to_lms_course()
 	_add_course_group_to_lms_question()
+	add_user_selected_program()
 	_setup_assistant_prompts()
 	frappe.db.commit()
 
@@ -313,7 +315,6 @@ def _add_course_to_lms_batch_enrollment() -> None:
 		]
 	}
 	create_custom_fields(custom_fields, ignore_validate=True)
-
 
 
 

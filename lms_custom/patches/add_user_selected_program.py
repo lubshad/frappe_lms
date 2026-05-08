@@ -1,12 +1,15 @@
 import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+from frappe.custom.doctype.property_setter.property_setter import make_property_setter
+
 
 def execute() -> None:
+	"""Add selected_program to User for LMS program-scoped exam/course filtering."""
 	# Cleanup previous attempt
 	frappe.db.delete("Custom Field", {"dt": "User", "fieldname": "exam_tab"})
 	frappe.db.delete("Custom Field", {"dt": "User", "fieldname": "exam_section"})
 
-	custom_fields: dict[str, list[dict[str, any]]] = {
+	custom_fields = {
 		"User": [
 			{
 				"fieldname": "selected_program",
@@ -19,10 +22,12 @@ def execute() -> None:
 	}
 	create_custom_fields(custom_fields, ignore_validate=True)
 
-	frappe.make_property_setter({
-		"doctype": "User",
-		"fieldname": "onboarding_status",
-		"property": "insert_after",
-		"value": "selected_program",
-		"property_type": "Data"
-	})
+	if frappe.db.has_column("User", "onboarding_status"):
+		make_property_setter(
+			"User",
+			"onboarding_status",
+			"insert_after",
+			"selected_program",
+			"Data",
+			for_doctype=False,
+		)

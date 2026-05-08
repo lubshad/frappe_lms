@@ -85,15 +85,16 @@ def get_enrolled_course_and_program_names(user: str) -> tuple[set[str], set[str]
 				if row.course:
 					course_names.add(row.course)
 
-	selected_program = frappe.db.get_value("User", user, "selected_program")
-	if selected_program:
-		program_names.add(selected_program)
-		program_courses = frappe.get_all(
-			"LMS Program Course",
-			filters={"parent": selected_program},
-			pluck="course",
-		)
-		course_names.update({course for course in program_courses if course})
+	if frappe.db.has_column("User", "selected_program"):
+		selected_program = frappe.db.get_value("User", user, "selected_program")
+		if selected_program:
+			program_names.add(selected_program)
+			program_courses = frappe.get_all(
+				"LMS Program Course",
+				filters={"parent": selected_program},
+				pluck="course",
+			)
+			course_names.update({course for course in program_courses if course})
 
 	return course_names, program_names
 

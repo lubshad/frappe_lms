@@ -104,16 +104,14 @@ def get_course_details(course_name: str) -> dict:
 def get_courses_for_picker(
 	search: str = "",
 	program_name: str = "",
+	course_group: str = "",
 	limit: int = 100,
 	offset: int = 0,
 ) -> list:
-	course_names = None
-	if program_name:
-		try:
-			program = frappe.get_doc("LMS Program", program_name)
-		except frappe.DoesNotExistError:
-			return []
-		course_names = [row.course for row in program.get("program_courses", []) if row.course]
+	course_names = _get_filtered_course_names(
+		program_name=program_name,
+		course_group=course_group,
+	)
 
 	filters: list = []
 	if course_names is not None:
@@ -125,7 +123,7 @@ def get_courses_for_picker(
 
 	return frappe.get_list(
 		"LMS Course",
-		fields=["name", "title", "published", "lessons"],
+		fields=["name", "title", "published", "lessons", "course_group"],
 		filters=filters,
 		limit_page_length=limit,
 		limit_start=offset,
@@ -138,23 +136,15 @@ def get_all_chapters(
 	search: str = "",
 	course_name: str = "",
 	program_name: str = "",
+	course_group: str = "",
 	limit: int = 100,
 	offset: int = 0,
 ) -> list:
-	chapter_names = None
-	if course_name:
-		course = frappe.get_doc("LMS Course", course_name)
-		chapter_names = [row.chapter for row in course.get("chapters", []) if row.chapter]
-	elif program_name:
-		program = frappe.get_doc("LMS Program", program_name)
-		course_names = [row.course for row in program.get("program_courses", []) if row.course]
-		chapter_names = []
-		for course_name_value in course_names:
-			try:
-				course = frappe.get_doc("LMS Course", course_name_value)
-			except frappe.DoesNotExistError:
-				continue
-			chapter_names.extend([row.chapter for row in course.get("chapters", []) if row.chapter])
+	chapter_names = _get_filtered_chapter_names(
+		course_name=course_name,
+		program_name=program_name,
+		course_group=course_group,
+	)
 
 	filters: list = []
 	if chapter_names is not None:
@@ -180,51 +170,16 @@ def get_all_lessons(
 	chapter_name: str = "",
 	course_name: str = "",
 	program_name: str = "",
+	course_group: str = "",
 	limit: int = 100,
 	offset: int = 0,
 ) -> list:
-	lesson_names = None
-	if chapter_name:
-		try:
-			chapter = frappe.get_doc("Course Chapter", chapter_name)
-		except frappe.DoesNotExistError:
-			return []
-		lesson_names = [row.lesson for row in chapter.get("lessons", []) if row.lesson]
-	elif course_name:
-		try:
-			course = frappe.get_doc("LMS Course", course_name)
-		except frappe.DoesNotExistError:
-			return []
-		lesson_names = []
-		for chapter_row in course.get("chapters", []):
-			if not chapter_row.chapter:
-				continue
-			try:
-				chapter = frappe.get_doc("Course Chapter", chapter_row.chapter)
-			except frappe.DoesNotExistError:
-				continue
-			lesson_names.extend([row.lesson for row in chapter.get("lessons", []) if row.lesson])
-	elif program_name:
-		try:
-			program = frappe.get_doc("LMS Program", program_name)
-		except frappe.DoesNotExistError:
-			return []
-		lesson_names = []
-		for program_course in program.get("program_courses", []):
-			if not program_course.course:
-				continue
-			try:
-				course = frappe.get_doc("LMS Course", program_course.course)
-			except frappe.DoesNotExistError:
-				continue
-			for chapter_row in course.get("chapters", []):
-				if not chapter_row.chapter:
-					continue
-				try:
-					chapter = frappe.get_doc("Course Chapter", chapter_row.chapter)
-				except frappe.DoesNotExistError:
-					continue
-				lesson_names.extend([row.lesson for row in chapter.get("lessons", []) if row.lesson])
+	lesson_names = _get_filtered_lesson_names(
+		chapter_name=chapter_name,
+		course_name=course_name,
+		program_name=program_name,
+		course_group=course_group,
+	)
 
 	filters: list = []
 	if lesson_names is not None:
@@ -242,6 +197,98 @@ def get_all_lessons(
 		limit_start=offset,
 		order_by="creation desc",
 	)
+
+
+def _get_filtered_course_names(
+	program_name: str = "",
+	course_group: str = "",
+) -> list[str] | None:
+	candidate_names: list[str] | None = None
+
+	if program_name:
+		try:
+			program = frappe.get_doc("LMS Program", program_name)
+		except frappe.DoesNotExistError:
+			return []
+		candidate_names = [row.course for row in program.get("program_courses", []) if row.course]
+
+	if course_group:
+		group_course_names = frappe.get_all(
+			"LMS Course",
+			filters={"course_group": course_group},
+			pluck="name",
+		)
+		candidate_names = _intersect_names(candidate_names, group_course_names)
+
+	return candidate_names
+
+
+def _get_filtered_chapter_names(
+	course_name: str = "",
+	program_name: str = "",
+	course_group: str = "",
+) -> list[str] | None:
+	course_names = _get_filtered_course_names(
+		program_name=program_name,
+		course_group=course_group,
+	)
+
+	if course_name:
+		if course_names is not None and course_name not in course_names:
+			return []
+		course_names = [course_name]
+
+	if course_names is None:
+		return None
+
+	chapter_names: list[str] = []
+	for course_name_value in course_names:
+		try:
+			course = frappe.get_doc("LMS Course", course_name_value)
+		except frappe.DoesNotExistError:
+			continue
+		chapter_names.extend([row.chapter for row in course.get("chapters", []) if row.chapter])
+
+	return chapter_names
+
+
+def _get_filtered_lesson_names(
+	chapter_name: str = "",
+	course_name: str = "",
+	program_name: str = "",
+	course_group: str = "",
+) -> list[str] | None:
+	chapter_names = _get_filtered_chapter_names(
+		course_name=course_name,
+		program_name=program_name,
+		course_group=course_group,
+	)
+
+	if chapter_name:
+		if chapter_names is not None and chapter_name not in chapter_names:
+			return []
+		chapter_names = [chapter_name]
+
+	if chapter_names is None:
+		return None
+
+	lesson_names: list[str] = []
+	for chapter_name_value in chapter_names:
+		try:
+			chapter = frappe.get_doc("Course Chapter", chapter_name_value)
+		except frappe.DoesNotExistError:
+			continue
+		lesson_names.extend([row.lesson for row in chapter.get("lessons", []) if row.lesson])
+
+	return lesson_names
+
+
+def _intersect_names(left: list[str] | None, right: list[str]) -> list[str]:
+	if left is None:
+		return right
+
+	right_set = set(right)
+	return [name for name in left if name in right_set]
 
 
 @frappe.whitelist()

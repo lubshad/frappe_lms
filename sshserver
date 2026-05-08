@@ -1,0 +1,149 @@
+#!/bin/bash
+
+# SSH helper for configured LMS custom Frappe tenant targets.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TENANT_CONFIG="$SCRIPT_DIR/deploy-tenants.conf"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+print_status() {
+	echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+print_success() {
+	echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+print_error() {
+	echo -e "${RED}[ERROR]${NC} $1" >&2
+}
+
+show_usage() {
+	echo "Usage: $0 <tenant> [OPTIONS]"
+	echo ""
+	echo "Tenants:"
+	if declare -F available_tenants >/dev/null 2>&1; then
+		available_tenants | sed 's/^/  /'
+	else
+		echo "  mcal"
+	fi
+	echo ""
+	echo "Options:"
+	echo "  -h, --help                 Show this help message"
+	echo "  -c, --command COMMAND      Execute a command on the server"
+	echo "  -i, --interactive          Connect interactively (default)"
+	echo ""
+	echo "Examples:"
+	echo "  $0 mcal"
+	echo "  $0 mcal --command 'bench --site mcalfrappe.coreaxissolutions.in migrate'"
+	echo "  $0 mcal --command 'bench --site mcalfrappe.coreaxissolutions.in scheduler status'"
+}
+
+load_config() {
+	if [ ! -f "$TENANT_CONFIG" ]; then
+		print_error "Tenant config not found: $TENANT_CONFIG"
+		exit 1
+	fi
+
+	# shellcheck source=/dev/null
+	source "$TENANT_CONFIG"
+}
+
+resolve_identity_path() {
+	if [[ "$IDENTITY_FILE" = /* ]]; then
+		IDENTITY_PATH="$IDENTITY_FILE"
+	else
+		IDENTITY_PATH="$SCRIPT_DIR/$IDENTITY_FILE"
+	fi
+}
+
+validate_target() {
+	if ! load_tenant_config "$TENANT"; then
+		print_error "Unknown or unconfigured tenant: $TENANT"
+		show_usage >&2
+		exit 1
+	fi
+
+	SERVER_PORT="${SERVER_PORT:-22}"
+	resolve_identity_path
+
+	if [ ! -f "$IDENTITY_PATH" ]; then
+		print_error "SSH identity file not found: $IDENTITY_PATH"
+		exit 1
+	fi
+}
+
+execute_command() {
+	local cmd="$1"
+	print_status "Executing command on tenant=$TENANT $SERVER_USER@$SERVER_HOST: $cmd"
+	ssh -i "$IDENTITY_PATH" -p "$SERVER_PORT" "$SERVER_USER@$SERVER_HOST" "$cmd"
+}
+
+connect_interactive() {
+	print_status "Connecting to tenant=$TENANT $SERVER_USER@$SERVER_HOST..."
+	print_success "Connected! Use 'exit' to disconnect."
+	ssh -i "$IDENTITY_PATH" -p "$SERVER_PORT" "$SERVER_USER@$SERVER_HOST"
+}
+
+load_config
+
+TENANT=""
+INTERACTIVE=true
+COMMAND=""
+
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+		-h|--help)
+			show_usage
+			exit 0
+			;;
+		-c|--command)
+			if [ $# -lt 2 ]; then
+				print_error "$1 requires a command."
+				show_usage >&2
+				exit 1
+			fi
+			COMMAND="$2"
+			INTERACTIVE=false
+			shift 2
+			;;
+		-i|--interactive)
+			INTERACTIVE=true
+			shift
+			;;
+		-*)
+			print_error "Unknown option: $1"
+			show_usage >&2
+			exit 1
+			;;
+		*)
+			if [ -n "$TENANT" ]; then
+				print_error "Unexpected extra argument: $1"
+				show_usage >&2
+				exit 1
+			fi
+			TENANT="$1"
+			shift
+			;;
+	esac
+done
+
+if [ -z "$TENANT" ]; then
+	print_error "Tenant is required."
+	show_usage >&2
+	exit 1
+fi
+
+validate_target
+
+if [ "$INTERACTIVE" = true ]; then
+	connect_interactive
+else
+	execute_command "$COMMAND"
+fi

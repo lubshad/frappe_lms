@@ -1,4 +1,6 @@
 import frappe
+from frappe import _
+from frappe.model.document import Document
 
 from lms_custom.api._utils import expand_relative_urls, get_request_base_url, parse_json_list
 
@@ -168,6 +170,7 @@ def get_all_chapters(
 def get_all_lessons(
 	search: str = "",
 	chapter_name: str = "",
+	exclude_chapter_name: str = "",
 	course_name: str = "",
 	program_name: str = "",
 	course_group: str = "",
@@ -180,12 +183,22 @@ def get_all_lessons(
 		program_name=program_name,
 		course_group=course_group,
 	)
+	excluded_lesson_names: list[str] = []
+
+	if exclude_chapter_name:
+		excluded_lesson_names = _get_chapter_lesson_names(exclude_chapter_name)
+		if excluded_lesson_names:
+			if lesson_names is not None:
+				excluded_lesson_names_set = set(excluded_lesson_names)
+				lesson_names = [name for name in lesson_names if name not in excluded_lesson_names_set]
 
 	filters: list = []
 	if lesson_names is not None:
 		if not lesson_names:
 			return []
 		filters.append(["name", "in", lesson_names])
+	elif exclude_chapter_name and excluded_lesson_names:
+		filters.append(["name", "not in", excluded_lesson_names])
 	if search:
 		filters.append(["title", "like", f"%{search}%"])
 
@@ -197,6 +210,41 @@ def get_all_lessons(
 		limit_start=offset,
 		order_by="creation desc",
 	)
+
+
+@frappe.whitelist()
+def create_lesson_for_chapter(
+	title: str,
+	chapter: str,
+	content: str = "",
+	youtube: str = "",
+	quiz_id: str = "",
+) -> dict:
+	if not title or not title.strip():
+		frappe.throw(_("Lesson title is required."))
+	if not chapter or not frappe.db.exists("Course Chapter", chapter):
+		frappe.throw(_("Course Chapter {0} not found.").format(chapter))
+
+	chapter_doc = frappe.get_doc("Course Chapter", chapter)
+	lesson = frappe.new_doc("Course Lesson")
+	lesson.update(
+		{
+			"title": title.strip(),
+			"chapter": chapter_doc.name,
+			"course": chapter_doc.course,
+			"content": content or "",
+			"youtube": youtube or "",
+			"quiz_id": quiz_id or "",
+		}
+	)
+	lesson.insert()
+
+	if not any(row.lesson == lesson.name for row in chapter_doc.get("lessons", [])):
+		chapter_doc.append("lessons", {"lesson": lesson.name})
+		chapter_doc.save(ignore_permissions=True)
+
+	frappe.db.commit()
+	return _serialize_lesson(lesson)
 
 
 def _get_filtered_course_names(
@@ -281,6 +329,25 @@ def _get_filtered_lesson_names(
 		lesson_names.extend([row.lesson for row in chapter.get("lessons", []) if row.lesson])
 
 	return lesson_names
+
+
+def _get_chapter_lesson_names(chapter_name: str) -> list[str]:
+	if not frappe.db.exists("Course Chapter", chapter_name):
+		return []
+
+	chapter = frappe.get_doc("Course Chapter", chapter_name)
+	return [row.lesson for row in chapter.get("lessons", []) if row.lesson]
+
+
+def _serialize_lesson(lesson: Document) -> dict:
+	return {
+		"name": lesson.name,
+		"title": lesson.title,
+		"youtube": lesson.youtube,
+		"quiz_id": lesson.quiz_id,
+		"content": lesson.content,
+		"chapter": lesson.chapter,
+	}
 
 
 def _intersect_names(left: list[str] | None, right: list[str]) -> list[str]:
